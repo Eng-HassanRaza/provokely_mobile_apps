@@ -20,7 +20,6 @@ workflows:
         ls -la ios/Runner.xcodeproj || true
         test -f ios/Runner.xcodeproj/project.pbxproj || (echo "xcodeproj still missing" && exit 1)
         flutter pub get
-        cd ios && pod install --repo-update && cd ..
         bash scripts/config_platforms.sh || true
         flutter build ipa --release --no-codesign \
           --dart-define=API_BASE_URL=$API_BASE_URL \

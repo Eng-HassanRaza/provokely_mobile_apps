@@ -1,5 +1,6 @@
 name: provokely_app
 description: Provokely MVP mobile app (Android & iOS)
+version: 1.0.0+1
 publish_to: "none"
 
 environment:
