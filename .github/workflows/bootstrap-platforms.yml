@@ -1,0 +1,58 @@
+name: Bootstrap Flutter Platforms
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Branch to push platform changes to"
+        required: false
+        default: "bootstrap/platforms"
+
+permissions:
+  contents: write
+
+jobs:
+  create-platforms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate iOS/Android folders if missing
+        run: |
+          echo "Existing tree:" && ls -la
+          if [ ! -f ios/Runner.xcodeproj/project.pbxproj ] || [ ! -f android/app/build.gradle ]; then
+            flutter create --platforms=ios,android .
+          fi
+          echo "After flutter create:" && ls -la ios || true && ls -la ios/Runner.xcodeproj || true && ls -la android/app || true
+
+      - name: Commit changes
+        run: |
+          set -e
+          CHANGES=$(git status --porcelain)
+          if [ -z "$CHANGES" ]; then
+            echo "No platform changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          BRANCH="${{ github.event.inputs.target_branch }}"
+          git checkout -B "$BRANCH"
+          git add ios android
+          git commit -m "chore(platforms): generate Flutter iOS/Android skeleton"
+          git push origin "$BRANCH" --force
+          echo "Pushed changes to $BRANCH"
+
+      - name: Show next steps
+        run: |
+          echo "Create a PR from the target branch into your default branch, or merge directly if desired."
+          echo "Then re-run Codemagic."
+
+
