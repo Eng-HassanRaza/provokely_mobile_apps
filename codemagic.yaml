@@ -12,11 +12,13 @@ workflows:
     scripts:
       - | 
         flutter --version
-        # Ensure iOS platform exists; if folder exists but project is missing, recreate iOS
-        if [ ! -f ios/Runner.xcodeproj/project.pbxproj ]; then
-          rm -rf ios
-          flutter create --platforms=ios .
-        fi
+        # Always (re)generate iOS platform to avoid partial/missing project state
+        rm -rf ios
+        flutter create --platforms=ios .
+        echo "--- iOS directory after flutter create ---"
+        ls -la ios || true
+        ls -la ios/Runner.xcodeproj || true
+        test -f ios/Runner.xcodeproj/project.pbxproj || (echo "xcodeproj still missing" && exit 1)
         flutter pub get
         cd ios && pod install --repo-update && cd ..
         bash scripts/config_platforms.sh || true
