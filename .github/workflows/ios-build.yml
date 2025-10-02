@@ -1,0 +1,38 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Flutter create platforms if missing
+        run: |
+          if [ ! -d ios ]; then flutter create .; fi
+      - name: Flutter pub get
+        run: flutter pub get
+      - name: CocoaPods setup
+        run: |
+          cd ios
+          pod install --repo-update
+      - name: Configure deep links
+        run: bash scripts/config_platforms.sh || true
+      - name: Build IPA (release)
+        run: |
+          flutter build ipa --release --no-codesign --dart-define=API_BASE_URL=https://example.com
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: provokely-ipa-release
+          path: build/ios/ipa/*.ipa
+      # Signing to be added later via secrets and Fastlane/App Store Connect
+
+
