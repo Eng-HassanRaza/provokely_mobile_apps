@@ -12,7 +12,11 @@ workflows:
     scripts:
       - | 
         flutter --version
-        if [ ! -d ios ]; then flutter create .; fi
+        # Ensure iOS platform exists; if folder exists but project is missing, recreate iOS
+        if [ ! -f ios/Runner.xcodeproj/project.pbxproj ]; then
+          rm -rf ios
+          flutter create --platforms=ios .
+        fi
         flutter pub get
         cd ios && pod install --repo-update && cd ..
         bash scripts/config_platforms.sh || true
@@ -35,7 +39,15 @@ workflows:
     scripts:
       - |
         flutter --version
-        if [ ! -d android ] || [ ! -d ios ]; then flutter create .; fi
+        # Ensure Android & iOS platforms exist (needed for some Flutter tooling)
+        if [ ! -f android/app/build.gradle ]; then
+          rm -rf android
+          flutter create --platforms=android .
+        fi
+        if [ ! -f ios/Runner.xcodeproj/project.pbxproj ]; then
+          rm -rf ios
+          flutter create --platforms=ios .
+        fi
         flutter pub get
         bash scripts/config_platforms.sh || true
         flutter build apk --debug \
