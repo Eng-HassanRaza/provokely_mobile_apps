@@ -1,0 +1,47 @@
+workflows:
+  ios_unsigned:
+    name: iOS unsigned (CI bootstrap)
+    max_build_duration: 60
+    environment:
+      vars:
+        API_BASE_URL: "https://example.com"
+        ENABLE_FCM: "false"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - | 
+        flutter --version
+        if [ ! -d ios ]; then flutter create .; fi
+        flutter pub get
+        cd ios && pod install --repo-update && cd ..
+        bash scripts/config_platforms.sh || true
+        flutter build ipa --release --no-codesign \
+          --dart-define=API_BASE_URL=$API_BASE_URL \
+          --dart-define=ENABLE_FCM=$ENABLE_FCM
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
+      - flutter_drive.log
+
+  android_debug:
+    name: Android debug APK
+    max_build_duration: 60
+    environment:
+      vars:
+        API_BASE_URL: "http://10.0.2.2:8000"
+        ENABLE_FCM: "false"
+      flutter: stable
+    scripts:
+      - |
+        flutter --version
+        if [ ! -d android ] || [ ! -d ios ]; then flutter create .; fi
+        flutter pub get
+        bash scripts/config_platforms.sh || true
+        flutter build apk --debug \
+          --dart-define=API_BASE_URL=$API_BASE_URL \
+          --dart-define=ENABLE_FCM=$ENABLE_FCM
+    artifacts:
+      - build/app/outputs/flutter-apk/app-debug.apk
+
+
