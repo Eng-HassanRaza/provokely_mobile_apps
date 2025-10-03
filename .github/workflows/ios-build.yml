@@ -53,11 +53,18 @@ jobs:
             -exportPath build/ios | xcpretty || true
           # Fallback to Flutter if export step is skipped; this will still be unsigned
           flutter build ipa --release --no-codesign --dart-define=API_BASE_URL=${API_BASE_URL} || true
+          echo "Listing build outputs:" && ls -R build || true
+          # Collect IPA from known locations
+          IPA_PATH="$(ls build/ios/ipa/*.ipa 2>/dev/null || true)"
+          if [ -z "$IPA_PATH" ]; then IPA_PATH="$(ls build/ios/*.ipa 2>/dev/null || true)"; fi
+          if [ -z "$IPA_PATH" ]; then echo "No IPA found" && exit 1; fi
+          mkdir -p artifacts
+          cp "$IPA_PATH" artifacts/Runner.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa-unsigned
-          path: build/ios/ipa/*.ipa
+          path: artifacts/Runner.ipa
 
 
