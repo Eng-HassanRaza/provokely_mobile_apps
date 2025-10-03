@@ -42,19 +42,15 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
         run: |
-          # Build .xcarchive without code signing for a generic iOS device
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner -configuration Release -archivePath build/Runner.xcarchive \
-            -destination 'generic/platform=iOS' -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= \
-            PRODUCT_BUNDLE_IDENTIFIER=com.example.provokelyApp \
-            clean archive | xcpretty
+          # Build device .app without code signing using Flutter (avoids archive step)
+          flutter build ios --release --no-codesign \
+            --dart-define=API_BASE_URL=${API_BASE_URL}
 
-          echo "Archive contents:" && ls -R build/Runner.xcarchive || true
+          echo "iPhoneOS build outputs:" && ls -R build/ios/iphoneos || true
 
-          # Manually package unsigned IPA from the archived .app
-          APP_PATH="build/Runner.xcarchive/Products/Applications/Runner.app"
-          test -d "$APP_PATH" || (echo "Runner.app not found in archive" && exit 1)
+          # Manually package unsigned IPA from the built .app
+          APP_PATH=$(ls -d build/ios/iphoneos/*.app | head -n 1)
+          test -d "$APP_PATH" || (echo "Runner.app not found in build/ios/iphoneos" && exit 1)
           mkdir -p artifacts/Payload
           cp -R "$APP_PATH" artifacts/Payload/Runner.app
           (cd artifacts && zip -r Runner.ipa Payload)
