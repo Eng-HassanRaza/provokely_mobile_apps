@@ -29,6 +29,32 @@ workflows:
       - build/ios/archive/*.xcarchive
       - flutter_drive.log
 
+  ios_simulator_debug:
+    name: iOS Simulator Debug (no signing)
+    max_build_duration: 60
+    environment:
+      vars:
+        API_BASE_URL: "https://example.com"
+        ENABLE_FCM: "false"
+      flutter: stable
+      xcode: latest
+    scripts:
+      - |
+        flutter --version
+        rm -rf ios
+        flutter create --platforms=ios .
+        flutter pub get
+        bash scripts/config_platforms.sh || true
+        # Build for simulator to avoid signing; produces .app
+        flutter build ios --simulator --debug \
+          --dart-define=API_BASE_URL=$API_BASE_URL \
+          --dart-define=ENABLE_FCM=$ENABLE_FCM
+        # Zip the .app for artifact download
+        APP_PATH=$(ls -d build/ios/iphonesimulator/*.app | head -n 1)
+        (cd build/ios/iphonesimulator && zip -r app-simulator.zip "$(basename "$APP_PATH")")
+    artifacts:
+      - build/ios/iphonesimulator/app-simulator.zip
+
   android_debug:
     name: Android debug APK
     max_build_duration: 60
