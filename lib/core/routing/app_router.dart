@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 
 import '../../features/auth/login_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
@@ -42,21 +42,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
   );
 
-  // Deep link listener: provokely://oauth/instagram?status=success
-  linkStream.listen((link) {
-    if (link == null) return;
-    final uri = Uri.parse(link);
+  // Deep link listener using app_links
+  final appLinks = AppLinks();
+  appLinks.uriLinkStream.listen((uri) {
     if (uri.scheme == 'provokely' && uri.host == 'oauth' && uri.path == '/instagram') {
       router.push('/connect', extra: uri.queryParameters);
     }
   });
-
-  // Handle initial deep link if app launched via URL
   () async {
     try {
-      final link = await getInitialLink();
-      if (link == null) return;
-      final uri = Uri.parse(link);
+      final uri = await appLinks.getInitialAppLink();
+      if (uri == null) return;
       if (uri.scheme == 'provokely' && uri.host == 'oauth' && uri.path == '/instagram') {
         router.push('/connect', extra: uri.queryParameters);
       }
