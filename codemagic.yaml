@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     environment:
       vars:
-        API_BASE_URL: "https://example.com"
+        API_BASE_URL: "https://b7952588dcff.ngrok-free.app"
         ENABLE_FCM: "false"
       flutter: stable
       xcode: latest
@@ -37,7 +37,7 @@ workflows:
     max_build_duration: 60
     environment:
       vars:
-        API_BASE_URL: "https://example.com"
+        API_BASE_URL: "https://b7952588dcff.ngrok-free.app"
         ENABLE_FCM: "false"
       flutter: stable
       xcode: latest
@@ -65,7 +65,7 @@ workflows:
     max_build_duration: 60
     environment:
       vars:
-        API_BASE_URL: "http://10.0.2.2:8000"
+        API_BASE_URL: "https://b7952588dcff.ngrok-free.app"
         ENABLE_FCM: "false"
       flutter: stable
     scripts:
