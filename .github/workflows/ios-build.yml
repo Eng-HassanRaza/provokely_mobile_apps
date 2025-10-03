@@ -33,7 +33,7 @@ jobs:
         run: |
           cd ios
           pod repo update
-          pod install --repo-update
+          pod install --repo-update --verbose
 
       - name: Configure deep links
         run: bash scripts/config_platforms.sh || true
