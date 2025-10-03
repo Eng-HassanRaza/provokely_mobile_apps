@@ -42,24 +42,23 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
         run: |
-          # Build archive without code signing
+          # Build .xcarchive without code signing for a generic iOS device
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner -configuration Release -archivePath build/Runner.xcarchive \
+            -destination 'generic/platform=iOS' -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= \
-            PRODUCT_BUNDLE_IDENTIFIER=com.example.provokelyApp clean archive | xcpretty
-          # Export unsigned IPA
-          xcodebuild -exportArchive -archivePath build/Runner.xcarchive \
-            -exportOptionsPlist <(echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>ad-hoc</string><key>compileBitcode</key><false/></dict></plist>') \
-            -exportPath build/ios | xcpretty || true
-          # Fallback to Flutter if export step is skipped; this will still be unsigned
-          flutter build ipa --release --no-codesign --dart-define=API_BASE_URL=${API_BASE_URL} || true
-          echo "Listing build outputs:" && ls -R build || true
-          # Collect IPA from known locations
-          IPA_PATH="$(ls build/ios/ipa/*.ipa 2>/dev/null || true)"
-          if [ -z "$IPA_PATH" ]; then IPA_PATH="$(ls build/ios/*.ipa 2>/dev/null || true)"; fi
-          if [ -z "$IPA_PATH" ]; then echo "No IPA found" && exit 1; fi
-          mkdir -p artifacts
-          cp "$IPA_PATH" artifacts/Runner.ipa
+            PRODUCT_BUNDLE_IDENTIFIER=com.example.provokelyApp \
+            clean archive | xcpretty
+
+          echo "Archive contents:" && ls -R build/Runner.xcarchive || true
+
+          # Manually package unsigned IPA from the archived .app
+          APP_PATH="build/Runner.xcarchive/Products/Applications/Runner.app"
+          test -d "$APP_PATH" || (echo "Runner.app not found in archive" && exit 1)
+          mkdir -p artifacts/Payload
+          cp -R "$APP_PATH" artifacts/Payload/Runner.app
+          (cd artifacts && zip -r Runner.ipa Payload)
+          rm -rf artifacts/Payload
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
