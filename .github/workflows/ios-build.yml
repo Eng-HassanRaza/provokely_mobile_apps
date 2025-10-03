@@ -42,15 +42,28 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
         run: |
-          # Build device .app without code signing using Flutter (avoids archive step)
+          # 1) Prebuild with Flutter to generate assets and configs
           flutter build ios --release --no-codesign \
             --dart-define=API_BASE_URL=${API_BASE_URL}
 
-          echo "iPhoneOS build outputs:" && ls -R build/ios/iphoneos || true
+          # 2) Archive with xcodebuild for a generic iOS device with signing disabled
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner -configuration Release -archivePath build/Runner.xcarchive \
+            -destination 'generic/platform=iOS' -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM= CODE_SIGN_STYLE=Manual \
+            PRODUCT_BUNDLE_IDENTIFIER=com.example.provokelyApp \
+            ONLY_ACTIVE_ARCH=NO clean archive | xcpretty
 
-          # Manually package unsigned IPA from the built .app
-          APP_PATH=$(ls -d build/ios/iphoneos/*.app | head -n 1)
-          test -d "$APP_PATH" || (echo "Runner.app not found in build/ios/iphoneos" && exit 1)
+          echo "Archive contents:" && ls -R build/Runner.xcarchive || true
+
+          # 3) Package IPA manually from archive
+          APP_PATH="build/Runner.xcarchive/Products/Applications/Runner.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Runner.app not found in archive. Falling back to flutter build output."
+            APP_PATH=$(ls -d build/ios/iphoneos/*.app 2>/dev/null | head -n 1)
+          fi
+          test -d "$APP_PATH" || (echo "Runner.app not found" && exit 1)
           mkdir -p artifacts/Payload
           cp -R "$APP_PATH" artifacts/Payload/Runner.app
           (cd artifacts && zip -r Runner.ipa Payload)
