@@ -82,10 +82,11 @@ workflows:
         fi
         flutter pub get
         bash scripts/config_platforms.sh || true
-        flutter build apk --debug \
+        # Build minimized split-per-abi release APKs for smaller size
+        flutter build apk --release --split-per-abi \
           --dart-define=API_BASE_URL=$API_BASE_URL \
           --dart-define=ENABLE_FCM=$ENABLE_FCM
     artifacts:
-      - build/app/outputs/flutter-apk/app-debug.apk
+      - build/app/outputs/flutter-apk/*-release.apk
 
 
