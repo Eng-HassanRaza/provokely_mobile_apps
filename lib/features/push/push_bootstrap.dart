@@ -20,7 +20,7 @@ Future<void> initializePushIfEnabled(ProviderContainer container) async {
     if (token != null) {
       await _registerDevice(container, token);
     }
-    FirebaseMessaging.onTokenRefresh.listen((t) => _registerDevice(container, t));
+    messaging.onTokenRefresh.listen((t) => _registerDevice(container, t));
 
     FirebaseMessaging.onMessage.listen((message) {
       final ctx = rootNavigatorKey.currentContext;

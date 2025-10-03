@@ -1,15 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../core/network/dio_client.dart';
 import '../../models/notification_item.dart';
 
-final notificationsRepositoryProvider = Provider<NotificationsRepository>((ref) => NotificationsRepository(ref.read));
+final notificationsRepositoryProvider = Provider<NotificationsRepository>((ref) => NotificationsRepository(ref));
 
 class NotificationsRepository {
-  NotificationsRepository(this._read);
-  final Reader _read;
-  Dio get _dio => _read(dioProvider);
+  NotificationsRepository(this._ref);
+  final Ref _ref;
+  Dio get _dio => _ref.read(dioProvider);
 
   Future<({List<NotificationItem> items, int nextPage})> list({required int page, int pageSize = 20}) async {
     final resp = await _dio.get(

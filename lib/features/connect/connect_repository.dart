@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../core/network/dio_client.dart';
 
-final connectRepositoryProvider = Provider<ConnectRepository>((ref) => ConnectRepository(ref.read));
+final connectRepositoryProvider = Provider<ConnectRepository>((ref) => ConnectRepository(ref));
 
 class ConnectRepository {
-  ConnectRepository(this._read);
-  final Reader _read;
-  Dio get _dio => _read(dioProvider);
+  ConnectRepository(this._ref);
+  final Ref _ref;
+  Dio get _dio => _ref.read(dioProvider);
 
   Future<({String url, String state})> getAuthUrl() async {
     final resp = await _dio.get('/api/v1/instagram/accounts/mobile/auth-url');

@@ -1,15 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../core/network/dio_client.dart';
 import '../../models/settings.dart';
 
-final settingsRepositoryProvider = Provider<SettingsRepository>((ref) => SettingsRepository(ref.read));
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) => SettingsRepository(ref));
 
 class SettingsRepository {
-  SettingsRepository(this._read);
-  final Reader _read;
-  Dio get _dio => _read(dioProvider);
+  SettingsRepository(this._ref);
+  final Ref _ref;
+  Dio get _dio => _ref.read(dioProvider);
 
   Future<InstagramSettings> getInstagramSettings() async {
     final resp = await _dio.get('/api/v1/core/settings/instagram');

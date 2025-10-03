@@ -1,18 +1,18 @@
 import 'package:dio/dio.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../core/network/dio_client.dart';
 import '../../core/storage/secure_store.dart';
 import '../../models/user.dart';
 
-final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository(ref.read));
+final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository(ref));
 
 class AuthRepository {
-  AuthRepository(this._read);
-  final Reader _read;
+  AuthRepository(this._ref);
+  final Ref _ref;
   final SecureStore _secure = SecureStore();
 
-  Dio get _dio => _read(dioProvider);
+  Dio get _dio => _ref.read(dioProvider);
 
   Future<UserModel> login({String? username, String? email, required String password}) async {
     final body = <String, dynamic>{'password': password};

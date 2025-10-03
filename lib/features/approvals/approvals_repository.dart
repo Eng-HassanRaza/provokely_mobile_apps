@@ -1,15 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../core/network/dio_client.dart';
 import '../../models/comment_summary.dart';
 
-final approvalsRepositoryProvider = Provider<ApprovalsRepository>((ref) => ApprovalsRepository(ref.read));
+final approvalsRepositoryProvider = Provider<ApprovalsRepository>((ref) => ApprovalsRepository(ref));
 
 class ApprovalsRepository {
-  ApprovalsRepository(this._read);
-  final Reader _read;
-  Dio get _dio => _read(dioProvider);
+  ApprovalsRepository(this._ref);
+  final Ref _ref;
+  Dio get _dio => _ref.read(dioProvider);
 
   Future<CommentSummary> getComment(String id) async {
     // If there's a dedicated endpoint, swap; otherwise assume notification detail provides enough.
