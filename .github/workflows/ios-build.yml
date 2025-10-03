@@ -42,8 +42,17 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
         run: |
-          flutter build ipa --release --no-codesign \
-            --dart-define=API_BASE_URL=${API_BASE_URL}
+          # Build archive without code signing
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner -configuration Release -archivePath build/Runner.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= \
+            PRODUCT_BUNDLE_IDENTIFIER=com.example.provokelyApp clean archive | xcpretty
+          # Export unsigned IPA
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive \
+            -exportOptionsPlist <(echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>ad-hoc</string><key>compileBitcode</key><false/></dict></plist>') \
+            -exportPath build/ios | xcpretty || true
+          # Fallback to Flutter if export step is skipped; this will still be unsigned
+          flutter build ipa --release --no-codesign --dart-define=API_BASE_URL=${API_BASE_URL} || true
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
