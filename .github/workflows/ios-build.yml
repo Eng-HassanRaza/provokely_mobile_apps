@@ -1,38 +1,54 @@
-name: iOS Build
+name: iOS IPA (unsigned)
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build-ios:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Flutter create platforms if missing
+
+      - name: Ensure iOS platform exists (keep committed Podfile)
         run: |
-          if [ ! -d ios ]; then flutter create .; fi
+          if [ ! -f ios/Runner.xcodeproj/project.pbxproj ]; then
+            flutter create --platforms=ios .
+          fi
+          ls -la ios || true
+
       - name: Flutter pub get
         run: flutter pub get
-      - name: CocoaPods setup
+
+      - name: Ensure iOS 13.0 deployment target in Podfile
+        run: |
+          /usr/bin/sed -i '' "s/^platform :ios, .*/platform :ios, '13.0'/" ios/Podfile || true
+
+      - name: CocoaPods install
         run: |
           cd ios
+          pod repo update
           pod install --repo-update
+
       - name: Configure deep links
         run: bash scripts/config_platforms.sh || true
-      - name: Build IPA (release)
+
+      - name: Build unsigned IPA
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
         run: |
-          flutter build ipa --release --no-codesign --dart-define=API_BASE_URL=https://example.com
+          flutter build ipa --release --no-codesign \
+            --dart-define=API_BASE_URL=${API_BASE_URL}
+
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: provokely-ipa-release
+          name: ios-ipa-unsigned
           path: build/ios/ipa/*.ipa
-      # Signing to be added later via secrets and Fastlane/App Store Connect
 
 

@@ -1,10 +1,7 @@
-name: Android Build
+name: Android Build (manual)
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -18,17 +15,18 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Flutter create platforms if missing
-        run: |
-          if [ ! -d android ] || [ ! -d ios ]; then flutter create .; fi
-      - name: Configure deep links
-        run: bash scripts/config_platforms.sh || true
       - name: Flutter pub get
         run: flutter pub get
+      - name: Configure deep links
+        run: bash scripts/config_platforms.sh || true
       - name: Build APK (debug)
-        run: flutter build apk --debug --dart-define=API_BASE_URL=https://example.com
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
+        run: flutter build apk --debug --dart-define=API_BASE_URL=${API_BASE_URL}
       - name: Build AAB (release)
-        run: flutter build appbundle --release --dart-define=API_BASE_URL=https://example.com
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
+        run: flutter build appbundle --release --dart-define=API_BASE_URL=${API_BASE_URL}
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
