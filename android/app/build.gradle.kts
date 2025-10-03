@@ -48,3 +48,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Required by Flutter's PlayStoreDeferredComponentManager references to Play Core
+    implementation("com.google.android.play:core:1.10.3")
+}
