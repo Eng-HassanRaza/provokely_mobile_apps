@@ -102,10 +102,12 @@ jobs:
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://provokely.com/' }}
           ENABLE_FCM: false
         run: |
-          flutter build ios --release \
+          # Generate Flutter assets and configuration without signing
+          flutter build ios --release --no-codesign \
             --dart-define=API_BASE_URL=${API_BASE_URL} \
             --dart-define=ENABLE_FCM=${ENABLE_FCM}
 
+          # Archive with proper signing
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner -configuration Release \
             -archivePath build/Runner.xcarchive \
