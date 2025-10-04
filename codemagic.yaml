@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     environment:
       vars:
-        API_BASE_URL: "https://b7952588dcff.ngrok-free.app"
+        API_BASE_URL: "https://provokely.com"
         ENABLE_FCM: "false"
       flutter: stable
       xcode: latest
@@ -37,7 +37,7 @@ workflows:
     max_build_duration: 60
     environment:
       vars:
-        API_BASE_URL: "https://b7952588dcff.ngrok-free.app"
+        API_BASE_URL: "https://provokely.com"
         ENABLE_FCM: "false"
       flutter: stable
       xcode: latest
@@ -65,7 +65,7 @@ workflows:
     max_build_duration: 60
     environment:
       vars:
-        API_BASE_URL: "https://b7952588dcff.ngrok-free.app"
+        API_BASE_URL: "https://provokely.com"
         ENABLE_FCM: "false"
       flutter: stable
     scripts:
