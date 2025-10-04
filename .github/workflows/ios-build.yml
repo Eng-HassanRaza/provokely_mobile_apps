@@ -55,12 +55,12 @@ jobs:
         run: |
           # Decode files safely using Python to avoid echo issues
           python3 -c "
-import base64, os
-with open('signing.p12', 'wb') as f:
-    f.write(base64.b64decode(os.environ['P12_BASE64']))
-with open('profile.mobileprovision', 'wb') as f:
-    f.write(base64.b64decode(os.environ['PROVISIONING_PROFILE_BASE64']))
-"
+          import base64, os
+          with open('signing.p12', 'wb') as f:
+              f.write(base64.b64decode(os.environ['P12_BASE64']))
+          with open('profile.mobileprovision', 'wb') as f:
+              f.write(base64.b64decode(os.environ['PROVISIONING_PROFILE_BASE64']))
+          "
           
           # Verify the P12 before importing
           openssl pkcs12 -info -in signing.p12 -noout -passin pass:"$P12_PASSWORD" || (echo "Bad P12/password" && exit 1)
