@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'auth_repository.dart';
 import 'session_controller.dart';
+import '../../core/config/app_config.dart';
 
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -30,8 +32,27 @@ class LoginScreen extends HookConsumerWidget {
         if (context.mounted) context.go('/');
       } catch (e) {
         if (context.mounted) {
+          String errorMessage = 'Login failed';
+          
+          if (e is AuthException) {
+            errorMessage = e.message;
+          } else {
+            errorMessage = 'Unexpected error: ${e.toString()}';
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login failed')),
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Dismiss',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
+            ),
           );
         }
       } finally {
@@ -87,6 +108,23 @@ class LoginScreen extends HookConsumerWidget {
                   onPressed: isLoading.value ? null : onLogin,
                   child: isLoading.value ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Login'),
                 ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 16),
+                  Text('Debug Info:', style: Theme.of(context).textTheme.bodySmall),
+                  Text('Backend URL: ${AppConfig.apiBaseUrl}', style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Backend URL: ${AppConfig.apiBaseUrl}'),
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    },
+                    child: const Text('Show Backend URL'),
+                  ),
+                ],
               ],
             ),
           ),

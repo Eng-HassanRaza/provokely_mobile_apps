@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../storage/secure_store.dart';
@@ -18,7 +19,17 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(_AuthInterceptor(ref));
-  dio.interceptors.add(LogInterceptor(responseBody: false, requestBody: true));
+  dio.interceptors.add(LogInterceptor(
+    responseBody: kDebugMode,
+    requestBody: kDebugMode,
+    requestHeader: kDebugMode,
+    responseHeader: kDebugMode,
+    logPrint: (obj) {
+      if (kDebugMode) {
+        print('🌐 Dio: $obj');
+      }
+    },
+  ));
   return dio;
 });
 
