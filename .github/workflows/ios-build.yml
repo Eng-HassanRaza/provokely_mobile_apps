@@ -6,6 +6,10 @@ on:
 jobs:
   build-ios:
     runs-on: macos-latest
+    env:
+      # Prefer setting this as a repo/org Secret or Variable with trailing slash
+      API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://provokely.com/' }}
+      ENABLE_FCM: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,41 +42,21 @@ jobs:
       - name: Configure deep links
         run: bash scripts/config_platforms.sh || true
 
-      - name: Build unsigned IPA
-        env:
-          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://example.com' }}
+      - name: Echo build defines
         run: |
-          # 1) Prebuild with Flutter to generate assets and configs
-          flutter build ios --release --no-codesign \
-            --dart-define=API_BASE_URL=${API_BASE_URL}
+          echo "API_BASE_URL=${API_BASE_URL}"
+          echo "ENABLE_FCM=${ENABLE_FCM}"
 
-          # 2) Archive with xcodebuild for a generic iOS device with signing disabled
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner -configuration Release -archivePath build/Runner.xcarchive \
-            -destination 'generic/platform=iOS' -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM= CODE_SIGN_STYLE=Manual \
-            PRODUCT_BUNDLE_IDENTIFIER=com.example.provokelyApp \
-            ONLY_ACTIVE_ARCH=NO clean archive | xcpretty
-
-          echo "Archive contents:" && ls -R build/Runner.xcarchive || true
-
-          # 3) Package IPA manually from archive
-          APP_PATH="build/Runner.xcarchive/Products/Applications/Runner.app"
-          if [ ! -d "$APP_PATH" ]; then
-            echo "Runner.app not found in archive. Falling back to flutter build output."
-            APP_PATH=$(ls -d build/ios/iphoneos/*.app 2>/dev/null | head -n 1)
-          fi
-          test -d "$APP_PATH" || (echo "Runner.app not found" && exit 1)
-          mkdir -p artifacts/Payload
-          cp -R "$APP_PATH" artifacts/Payload/Runner.app
-          (cd artifacts && zip -r Runner.ipa Payload)
-          rm -rf artifacts/Payload
+      - name: Build unsigned IPA (Flutter)
+        run: |
+          flutter build ipa --release --no-codesign \
+            --dart-define=API_BASE_URL=${API_BASE_URL} \
+            --dart-define=ENABLE_FCM=${ENABLE_FCM}
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa-unsigned
-          path: artifacts/Runner.ipa
+          path: build/ios/ipa/*.ipa
 
 
