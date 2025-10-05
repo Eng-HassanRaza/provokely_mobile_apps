@@ -1,4 +1,38 @@
 workflows:
+  ios_signed:
+    name: iOS signed (Ad Hoc)
+    max_build_duration: 60
+    environment:
+      vars:
+        API_BASE_URL: "https://provokely.com"
+        ENABLE_FCM: "false"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - | 
+        flutter --version
+        # Ensure iOS platform exists but keep committed Podfile (iOS 13.0)
+        if [ ! -f ios/Runner.xcodeproj/project.pbxproj ]; then
+          flutter create --platforms=ios .
+        fi
+        echo "--- iOS directory ---"
+        ls -la ios || true
+        ls -la ios/Runner.xcodeproj || true
+        test -f ios/Runner.xcodeproj/project.pbxproj || (echo "xcodeproj missing" && exit 1)
+        flutter pub get
+        # Install CocoaPods with repo update so minimum target settings apply
+        cd ios && pod install --repo-update && cd ..
+        bash scripts/config_platforms.sh || true
+        # Build with Codemagic auto-signing (remove --no-codesign)
+        flutter build ipa --release \
+          --dart-define=API_BASE_URL=$API_BASE_URL \
+          --dart-define=ENABLE_FCM=$ENABLE_FCM
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
+      - flutter_drive.log
+
   ios_unsigned:
     name: iOS unsigned (CI bootstrap)
     max_build_duration: 60
