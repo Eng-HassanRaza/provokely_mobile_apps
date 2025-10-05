@@ -116,12 +116,14 @@ jobs:
             CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=${TEAM_ID} \
             PROVISIONING_PROFILE_SPECIFIER=${PROFILE_UUID} clean archive | xcpretty
 
-      - name: Export signed IPA
+      - name: Package IPA manually (fast)
         run: |
-          xcodebuild -exportArchive \
-            -archivePath build/Runner.xcarchive \
-            -exportPath build/ios/signed \
-            -exportOptionsPlist exportOptions.plist | xcpretty
+          APP_PATH="build/Runner.xcarchive/Products/Applications/Runner.app"
+          test -d "$APP_PATH" || (echo "Runner.app not found in archive" && exit 1)
+          mkdir -p build/ios/signed/Payload
+          cp -R "$APP_PATH" build/ios/signed/Payload/Runner.app
+          (cd build/ios/signed && zip -r Runner.ipa Payload)
+          rm -rf build/ios/signed/Payload
           ls -la build/ios/signed || true
 
       - name: Upload signed IPA
