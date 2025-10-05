@@ -39,13 +39,30 @@ class ConnectInstagramScreen extends HookConsumerWidget {
       try {
         final result = await ref.read(connectRepositoryProvider).getAuthUrl();
         final uri = Uri.parse(result.url);
-        if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
-          throw Exception('Could not open browser');
+        
+        // Try to open Instagram app first, fallback to external browser
+        bool launched = false;
+        
+        // First try: Launch with external app preference (Instagram app)
+        try {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } catch (e) {
+          // If external app fails, try external browser
+          try {
+            launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } catch (e) {
+            // Final fallback: in-app browser
+            launched = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+          }
         }
-      } catch (_) {
+        
+        if (!launched) {
+          throw Exception('Could not open Instagram connection');
+        }
+      } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to initiate Instagram connect')),
+            SnackBar(content: Text('Failed to initiate Instagram connect: ${e.toString()}')),
           );
         }
       } finally {
@@ -78,5 +95,4 @@ class ConnectInstagramScreen extends HookConsumerWidget {
     );
   }
 }
-
 
